@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import http.server
 import json
+import logging
 import mimetypes
 import queue
 import threading
@@ -55,10 +56,20 @@ def _clamp_limit(raw, default: int) -> int:
 def _serve_static(handler, rel: str) -> None:
     rel = rel.lstrip("/")
     p = (WEB_ROOT / rel).resolve()
-    if not str(p).startswith(str(WEB_ROOT.resolve())) or not p.is_file():
+    
+    # Secure path validation: ensure resolved path is within WEB_ROOT
+    try:
+        p.relative_to(WEB_ROOT.resolve())
+    except ValueError:
         handler.send_response(404)
         handler.end_headers()
         return
+    
+    if not p.is_file():
+        handler.send_response(404)
+        handler.end_headers()
+        return
+    
     body = p.read_bytes()
     ctype, _ = mimetypes.guess_type(str(p))
     handler.send_response(200)
@@ -159,7 +170,8 @@ def build_handler(db_path: str, projects_dir: str):
                     try:
                         self.wfile.write(chunk)
                         self.wfile.flush()
-                    except (BrokenPipeError, ConnectionResetError):
+                    except (BrokenPipeError, ConnectionResetError, OSError) as e:
+                        logging.debug(f"SSE client disconnected: {e}")
                         return
             self.send_response(404)
             self.end_headers()

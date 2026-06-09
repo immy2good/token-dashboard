@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import time
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
@@ -69,11 +70,14 @@ def _prompt_text(rec: dict) -> Tuple[Optional[str], Optional[int]]:
 
 
 def _target(name: str, inp: dict) -> Optional[str]:
+    MAX_LEN = 500
     field = _TARGET_FIELDS.get(name)
     if field and isinstance(inp, dict):
         v = inp.get(field)
         if isinstance(v, str):
-            return v[:500]
+            if len(v) > MAX_LEN:
+                print(f"Warning: {name} target truncated from {len(v)} to {MAX_LEN} chars", file=sys.stderr)
+            return v[:MAX_LEN]
     return None
 
 
@@ -162,7 +166,10 @@ def parse_record(rec: dict, project_slug: str) -> Tuple[dict, List[dict]]:
 
 
 def _project_slug(file_path: Path, projects_root: Path) -> str:
+    """Extract project slug from file path. Returns 'root' if file is directly in projects_root."""
     rel = file_path.relative_to(projects_root)
+    if not rel.parts:
+        return "root"
     return rel.parts[0]
 
 

@@ -31,12 +31,14 @@ def cost_for(model: str, usage: dict, pricing: dict) -> dict:
             estimated = True
         else:
             return {"usd": None, "estimated": True, "breakdown": {}}
+    
+    # Safely extract rates with defaults to handle incomplete pricing.json
     bd = {
-        "input":           usage["input_tokens"]            * rates["input"]           / 1_000_000,
-        "output":          usage["output_tokens"]           * rates["output"]          / 1_000_000,
-        "cache_read":      usage["cache_read_tokens"]       * rates["cache_read"]      / 1_000_000,
-        "cache_create_5m": usage["cache_create_5m_tokens"]  * rates["cache_create_5m"] / 1_000_000,
-        "cache_create_1h": usage["cache_create_1h_tokens"]  * rates["cache_create_1h"] / 1_000_000,
+        "input":           usage.get("input_tokens", 0)            * rates.get("input", 0)           / 1_000_000,
+        "output":          usage.get("output_tokens", 0)           * rates.get("output", 0)          / 1_000_000,
+        "cache_read":      usage.get("cache_read_tokens", 0)       * rates.get("cache_read", 0)      / 1_000_000,
+        "cache_create_5m": usage.get("cache_create_5m_tokens", 0)  * rates.get("cache_create_5m", 0) / 1_000_000,
+        "cache_create_1h": usage.get("cache_create_1h_tokens", 0)  * rates.get("cache_create_1h", 0) / 1_000_000,
     }
     return {"usd": round(sum(bd.values()), 6), "estimated": estimated, "breakdown": bd}
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 import webbrowser
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -22,6 +23,15 @@ def _projects(args) -> str:
         or os.environ.get("CLAUDE_PROJECTS_DIR")
         or str(Path.home() / ".claude" / "projects")
     )
+
+
+def _get_port(default: int = 8080) -> int:
+    """Parse PORT environment variable with error handling."""
+    try:
+        return int(os.environ.get("PORT", str(default)))
+    except ValueError:
+        print(f"Warning: PORT environment variable is not a valid integer, using {default}", file=sys.stderr)
+        return default
 
 
 def _today_range():
@@ -78,7 +88,7 @@ def cmd_dashboard(args):
     from token_dashboard.server import run
 
     host = os.environ.get("HOST", "127.0.0.1")
-    port = int(os.environ.get("PORT", "8080"))
+    port = _get_port()
     url = f"http://{host}:{port}/"
     if not args.no_open:
         webbrowser.open(url)
