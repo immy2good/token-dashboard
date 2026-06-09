@@ -1,0 +1,14 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY . .
+
+ENV HOST=0.0.0.0
+ENV PORT=8080
+ENV CLAUDE_PROJECTS_DIR=/claude/projects
+ENV TOKEN_DASHBOARD_DB=/claude/token-dashboard.db
+
+EXPOSE 8080
+
+CMD ["python", "cli.py", "dashboard", "--no-open"]
